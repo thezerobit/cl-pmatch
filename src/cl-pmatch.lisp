@@ -12,6 +12,7 @@
            :+
            :*
            :any
+           :list
            ;; the rest of these are for the test framework
            :*success*
            :flatten-groups
@@ -96,6 +97,7 @@
       ((eq r1 '+) (pmatch-+ rule pattern input gc))
       ((eq r1 '*) (pmatch-* rule pattern input gc))
       ((eq r1 'any) (pmatch-any (or (car rest-rule) T) pattern input gc))
+      ((eq r1 'list) (pmatch-list rest-rule pattern input gc))
       ((eq r1 'push-group) (push-group rest-rule pattern input gc))
       ((eq r1 'pop-group) (pop-group rest-rule pattern input gc))
       (T nil) ;; unknown == fail
@@ -125,6 +127,9 @@
   (when (typep (car input) type)
     (pmatch-internal pattern (cdr input)
                      (gc-add-value gc (car input)))))
+
+(defun pmatch-list (list pattern input gc)
+  (pmatch-internal (append list pattern) input gc))
 
 (defun push-group (rest-rule pattern input gc)
   (pmatch-internal pattern input (gc-push-group gc (car rest-rule))))

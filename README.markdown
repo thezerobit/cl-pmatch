@@ -13,6 +13,9 @@
 (pmatch '(foo (or bar baz) qux) '(foo baz qux))
 ;-> T
 
+(pmatch '(this is (or (list a test) (list weird))) '(this is a test))
+;-> T
+
 (pmatch '(I (:verb (or love hate)) rock-n-roll) '(I love rock-n-roll))
 ;-> ((:VERB LOVE))
 
@@ -38,8 +41,9 @@ The rules are very similar to regular expressions.
 3. Sublists starting with '? match the subgroup 0 or 1 times.  
 4. Sublists starting with '+ match the subgroup 1 or more times.  
 5. Sublists starting with '* match the subgroup 0 or more times.  
-6. Sublists starting with keywords denote named capture groups.  
-7. Sublists with 'ANY and an optional type (defaulting to T) match any one
+6. Sublists starting with 'list denote groups.  
+7. Sublists starting with keywords denote named capture groups.  
+8. Sublists with 'ANY and an optional type (defaulting to T) match any one
 element that matches that type (T matches all types).  
 
 Where the regular expression `/fo+ba(rs)?/` would match "fooooba", if characters

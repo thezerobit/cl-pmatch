@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 31)
+(plan 34)
 
 (defparameter *test-matches*
   `(
@@ -40,6 +40,10 @@
     ((a (* b) c) (a c) ,*success*)
     ((a (* b) c) (a b c) ,*success*)
     ((a (* b d) c) (a b d b d c) ,*success*)
+    ;; subgroup with 'list
+    ((this is (or (list a test) (list weird))) (this is a test) ,*success*)
+    ((this is (or (list a test) (list weird))) (this is weird) ,*success*)
+    ((this is (or (list a test) (list weird))) (this is a revolution) nil)
     ;; named subgroup
     ((a (:middle b (? c)) d) (a b c d) ((:middle b c)))
     ((a (:middle b (? c)) d) (a b d) ((:middle b)))
