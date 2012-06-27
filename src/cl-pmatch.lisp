@@ -106,17 +106,17 @@
       (if result (return-from pmatch-or result)))))
 
 (defun pmatch-? (maybe pattern input gc)
-  (or (pmatch-internal (cons (car maybe) pattern) input gc)
+  (or (pmatch-internal (append maybe pattern) input gc)
       (pmatch-internal pattern input gc)))
 
 (defun pmatch-+ (rule pattern input gc)
   (let ((maybe (cdr rule)))
-    (or (pmatch-internal (cons (car maybe) (cons rule pattern)) input gc)
-        (pmatch-internal (cons (car maybe) pattern) input gc))))
+    (or (pmatch-internal (append maybe (cons rule pattern)) input gc)
+        (pmatch-internal (append maybe pattern) input gc))))
 
 (defun pmatch-* (rule pattern input gc)
   (let ((maybe (cdr rule)))
-    (or (pmatch-internal (cons (car maybe) (cons rule pattern)) input gc)
+    (or (pmatch-internal (append maybe (cons rule pattern)) input gc)
         (pmatch-internal pattern input gc))))
 
 (defun push-group (rest-rule pattern input gc)

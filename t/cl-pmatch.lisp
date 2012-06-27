@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 27)
+(plan 28)
 
 (defparameter *test-matches*
   `(
@@ -23,8 +23,9 @@
     ((a b c (or d e)) (a b c f) nil)
     ;; '? (maybe) matching
     ((a b (? c) d) (a b c d) ,*success*)
-    ((a b (? c) d) (a b d) ,*success*)
+    ((a b (? c d e) d) (a b d) ,*success*)
     ((a b (? c) d) (a b e d) nil)
+    ((a b (? c d e) d) (a b c d e d) ,*success*)
     ;; mixed 'or '? matching
     ((a (? (or b c)) d) (a b d) ,*success*)
     ((a (? (or b c)) d) (a c d) ,*success*)
@@ -34,11 +35,11 @@
     ;; '+ matching
     ((a (+ b) c) (a c) nil)
     ((a (+ b) c) (a b c) ,*success*)
-    ((a (+ b) c) (a b b b b c) ,*success*)
+    ((a (+ b d) c) (a b d b d c) ,*success*)
     ;; '* matching
     ((a (* b) c) (a c) ,*success*)
     ((a (* b) c) (a b c) ,*success*)
-    ((a (* b) c) (a b b b b c) ,*success*)
+    ((a (* b d) c) (a b d b d c) ,*success*)
     ;; named subgroup
     ((a (:middle b (? c)) d) (a b c d) ((:middle b c)))
     ((a (:middle b (? c)) d) (a b d) ((:middle b)))
