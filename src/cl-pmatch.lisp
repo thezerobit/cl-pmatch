@@ -9,6 +9,8 @@
   (:export :pmatch
            :or
            :?
+           :+
+           :*
            ;; the rest of these are for the test framework
            :*success*
            :flatten-groups
@@ -90,6 +92,8 @@
     (cond
       ((eq r1 'or) (pmatch-or rest-rule pattern input gc))
       ((eq r1 '?) (pmatch-? rest-rule pattern input gc))
+      ((eq r1 '+) (pmatch-+ rule pattern input gc))
+      ((eq r1 '*) (pmatch-* rule pattern input gc))
       ((eq r1 'push-group) (push-group rest-rule pattern input gc))
       ((eq r1 'pop-group) (pop-group rest-rule pattern input gc))
       (T nil) ;; unknown == fail
@@ -104,6 +108,16 @@
 (defun pmatch-? (maybe pattern input gc)
   (or (pmatch-internal (cons (car maybe) pattern) input gc)
       (pmatch-internal pattern input gc)))
+
+(defun pmatch-+ (rule pattern input gc)
+  (let ((maybe (cdr rule)))
+    (or (pmatch-internal (cons (car maybe) (cons rule pattern)) input gc)
+        (pmatch-internal (cons (car maybe) pattern) input gc))))
+
+(defun pmatch-* (rule pattern input gc)
+  (let ((maybe (cdr rule)))
+    (or (pmatch-internal (cons (car maybe) (cons rule pattern)) input gc)
+        (pmatch-internal pattern input gc))))
 
 (defun push-group (rest-rule pattern input gc)
   (pmatch-internal pattern input (gc-push-group gc (car rest-rule))))

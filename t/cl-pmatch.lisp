@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 21)
+(plan 27)
 
 (defparameter *test-matches*
   `(
@@ -31,6 +31,14 @@
     ((a (? (or b c)) d) (a d) ,*success*)
     ((a (? (or b c)) d) (a b c d) nil)
     ((a (? (or b c)) d) (a e d) nil)
+    ;; '+ matching
+    ((a (+ b) c) (a c) nil)
+    ((a (+ b) c) (a b c) ,*success*)
+    ((a (+ b) c) (a b b b b c) ,*success*)
+    ;; '* matching
+    ((a (* b) c) (a c) ,*success*)
+    ((a (* b) c) (a b c) ,*success*)
+    ((a (* b) c) (a b b b b c) ,*success*)
     ;; named subgroup
     ((a (:middle b (? c)) d) (a b c d) ((:middle b c)))
     ((a (:middle b (? c)) d) (a b d) ((:middle b)))
@@ -41,7 +49,8 @@
 (dolist (test *test-matches*)
   (destructuring-bind (p s r) test
     (let ((result (pmatch p s)))
-      (ok (equal r result) (format nil "~a should match ~a" result r)))))
+      (ok (equal r result) 
+          (format nil "~a should match ~a for~% (pmatch ~a ~a)" result r p s)))))
 
 (let ((tests
         `(
@@ -83,7 +92,7 @@
             (gc-add-value 6)
             (gc-get-groups)
             ))
-      (expected-1 `((:foo 2 3 4 5) (:bar 3 4))))
+      (expected-1 `((:bar 3 4) (:foo 2 3 4 5))))
   (if (not (equal result-1 expected-1))
     (fail (format nil "GC FAIL: ~a does not equal ~a~%" result-1 expected-1))
     (pass "GC Passed.")))
