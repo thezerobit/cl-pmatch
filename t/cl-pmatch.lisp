@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 28)
+(plan 31)
 
 (defparameter *test-matches*
   `(
@@ -45,6 +45,10 @@
     ((a (:middle b (? c)) d) (a b d) ((:middle b)))
     ((a (:middle b (or c e)) d) (a b c d) ((:middle b c)))
     ((a (:middle b (or c e)) d) (a b e d) ((:middle b e)))
+    ;; any (type) defaults to T which matches all types
+    ((a (any) c) (a b c) ,*success*)
+    ((a (any symbol) c) (a 100 c) nil)
+    ((a (any integer) c) (a 100 c) ,*success*)
     ))
 
 (dolist (test *test-matches*)
