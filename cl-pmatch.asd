@@ -13,7 +13,7 @@
 (in-package :cl-pmatch-asd)
 
 (defsystem cl-pmatch
-  :version "0.1-SNAPSHOT"
+  :version "0.1"
   :author "Stephen A. Goss"
   :license "Modified BSD"
   :depends-on ()
