@@ -115,12 +115,14 @@
 
 (defun pmatch-+ (rule pattern input gc)
   (let ((maybe (cdr rule)))
-    (or (pmatch-internal (append maybe (cons rule pattern)) input gc)
+    (or (and (not (null input))
+             (pmatch-internal (append maybe (cons rule pattern)) input gc))
         (pmatch-internal (append maybe pattern) input gc))))
 
 (defun pmatch-* (rule pattern input gc)
   (let ((maybe (cdr rule)))
-    (or (pmatch-internal (append maybe (cons rule pattern)) input gc)
+    (or (and (not (null input))
+             (pmatch-internal (append maybe (cons rule pattern)) input gc))
         (pmatch-internal pattern input gc))))
 
 (defun pmatch-any (type pattern input gc)
