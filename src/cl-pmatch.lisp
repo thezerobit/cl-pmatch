@@ -81,8 +81,11 @@
 ;; an input list
 (defgeneric pmatch (pattern input))
 
+;; specialize on pattern rules that are lists starting with a symbol
+;; '(foo my precious) -> (pmatch-list 'foo ('foo my precious) ....)
 (defgeneric pmatch-list (sym rule pattern input gc))
 
+;; specialize on rule type, builtin handlers exist for symbols and lists
 (defgeneric pmatch-aux (rule pattern input gc))
 
 (defmethod pmatch ((pattern list) input)

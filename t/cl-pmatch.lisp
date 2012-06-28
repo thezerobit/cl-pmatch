@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 36)
+(plan 40)
 
 (defparameter *test-matches*
   `(
@@ -109,5 +109,23 @@
 (let ((cp (compile-pattern '(a b (or c d)))))
   (is (pmatch cp '(a b d)) *success*)
   (is (pmatch cp '(a b e)) nil))
+
+;; specialize on pmatch-list, add BACKWARDS rule
+(defmethod pmatch-list ((sym (eql 'backwards)) rule pattern input gc)
+  (pmatch-internal (append (reverse (cdr rule)) pattern) input gc))
+
+(is (pmatch '(a (backwards b c) d) '(a c b d)) *success*)
+(is (pmatch '(a (backwards b c) d) '(a b c d)) nil)
+
+(defclass foo-matcher () ())
+
+(defmethod pmatch-aux ((rule foo-matcher) pattern input gc)
+  (and (eql 'foo (car input))
+       (pmatch-internal pattern (cdr input)
+                        (gc-add-value gc (car input)))))
+
+(let ((fm (make-instance 'foo-matcher)))
+  (is (pmatch (list 'a fm) '(a foo)) *success*)
+  (is (pmatch (list 'a fm) '(a bar)) nil))
 
 (finalize)
