@@ -93,17 +93,14 @@
 
 (defun pmatch-internal (pattern input gc)
   (if (null pattern)
-    ;; null pattern
     (and (null input) (or (gc-get-groups gc) *success*))
-    ;; not null pattern
-    (let ((p1 (car pattern)))
-      (if (symbolp p1)
-        ;; first in pattern is symbol
-        (and (eql p1 (car input))
-             (pmatch-internal (cdr pattern) (cdr input)
-                              (gc-add-value gc (car input))))
-        ;; first in pattern is something else
-        (pmatch-aux p1 (cdr pattern) input gc)))))
+    (pmatch-aux (car pattern) (cdr pattern) input gc)))
+
+(defmethod pmatch-aux ((rule symbol) pattern input gc)
+  (and (not (null input))
+       (eql rule (car input))
+       (pmatch-internal pattern (cdr input)
+                        (gc-add-value gc (car input)))))
 
 (defmethod pmatch-aux ((rule list) pattern input gc)
   (pmatch-list (car rule) rule pattern input gc))
