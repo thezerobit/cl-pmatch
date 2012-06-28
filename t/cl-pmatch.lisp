@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 34)
+(plan 36)
 
 (defparameter *test-matches*
   `(
@@ -105,5 +105,9 @@
   (if (not (equal result-1 expected-1))
     (fail (format nil "GC FAIL: ~a does not equal ~a~%" result-1 expected-1))
     (pass "GC Passed.")))
+
+(let ((cp (compile-pattern '(a b (or c d)))))
+  (is (pmatch cp '(a b d)) *success*)
+  (is (pmatch cp '(a b e)) nil))
 
 (finalize)

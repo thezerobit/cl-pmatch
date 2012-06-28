@@ -7,6 +7,10 @@
 (defpackage cl-pmatch
   (:use :cl)
   (:export :pmatch
+           :pmatch-list
+           :pmatch-aux
+           :pmatch-internal
+           :compile-pattern
            :or
            :?
            :+
@@ -66,8 +70,26 @@
 (defun gc-get-groups (gc)
   (reverse (cdr gc)))
 
-(defun pmatch (pattern input)
+(defclass compiled-pattern ()
+  ((cpattern :initarg :cpattern
+             :reader cpattern)))
+
+(defun compile-pattern (pattern)
+  (make-instance 'compiled-pattern :cpattern (flatten-groups pattern)))
+
+;; match the pattern (either a list or compiled-pattern) against
+;; an input list
+(defgeneric pmatch (pattern input))
+
+(defgeneric pmatch-list (sym rule pattern input gc))
+
+(defgeneric pmatch-aux (rule pattern input gc))
+
+(defmethod pmatch ((pattern list) input)
   (pmatch-internal (flatten-groups pattern) input (make-gc)))
+
+(defmethod pmatch ((pattern compiled-pattern) input)
+  (pmatch-internal (cpattern pattern) input (make-gc)))
 
 (defun pmatch-internal (pattern input gc)
   (if (null pattern)
@@ -83,58 +105,41 @@
         ;; first in pattern is something else
         (pmatch-aux p1 (cdr pattern) input gc)))))
 
-;; anything that's not a symbol or a list
-;; can have a method, allowing for user-defined
-;; matching classes
-(defgeneric pmatch-aux (rule pattern input gc))
-
 (defmethod pmatch-aux ((rule list) pattern input gc)
-  (let ((r1 (car rule))
-        (rest-rule (cdr rule)))
-    (cond
-      ((eq r1 'or) (pmatch-or rest-rule pattern input gc))
-      ((eq r1 '?) (pmatch-? rest-rule pattern input gc))
-      ((eq r1 '+) (pmatch-+ rule pattern input gc))
-      ((eq r1 '*) (pmatch-* rule pattern input gc))
-      ((eq r1 'any) (pmatch-any (or (car rest-rule) T) pattern input gc))
-      ((eq r1 'list) (pmatch-list rest-rule pattern input gc))
-      ((eq r1 'push-group) (push-group rest-rule pattern input gc))
-      ((eq r1 'pop-group) (pop-group rest-rule pattern input gc))
-      (T nil) ;; unknown == fail
-      )))
+  (pmatch-list (car rule) rule pattern input gc))
 
-(defun pmatch-or (options pattern input gc)
-  (dolist (option options)
+(defmethod pmatch-list ((sym (eql 'or)) rule pattern input gc)
+  (dolist (option (cdr rule))
     (let ((result (pmatch-internal (cons option pattern)
                                    input gc)))
-      (if result (return-from pmatch-or result)))))
+      (if result (return-from pmatch-list result)))))
 
-(defun pmatch-? (maybe pattern input gc)
-  (or (pmatch-internal (append maybe pattern) input gc)
+(defmethod pmatch-list ((sym (eql '?)) rule pattern input gc)
+  (or (pmatch-internal (append (cdr rule) pattern) input gc)
       (pmatch-internal pattern input gc)))
 
-(defun pmatch-+ (rule pattern input gc)
+(defmethod pmatch-list ((sym (eql '+)) rule pattern input gc)
   (let ((maybe (cdr rule)))
     (or (and (not (null input))
              (pmatch-internal (append maybe (cons rule pattern)) input gc))
         (pmatch-internal (append maybe pattern) input gc))))
 
-(defun pmatch-* (rule pattern input gc)
+(defmethod pmatch-list ((sym (eql '*)) rule pattern input gc)
   (let ((maybe (cdr rule)))
     (or (and (not (null input))
              (pmatch-internal (append maybe (cons rule pattern)) input gc))
         (pmatch-internal pattern input gc))))
 
-(defun pmatch-any (type pattern input gc)
-  (when (typep (car input) type)
+(defmethod pmatch-list ((sym (eql 'any)) rule pattern input gc)
+  (when (typep (car input) (or (cadr rule) T))
     (pmatch-internal pattern (cdr input)
                      (gc-add-value gc (car input)))))
 
-(defun pmatch-list (list pattern input gc)
-  (pmatch-internal (append list pattern) input gc))
+(defmethod pmatch-list ((sym (eql 'list)) rule pattern input gc)
+  (pmatch-internal (append (cdr rule) pattern) input gc))
 
-(defun push-group (rest-rule pattern input gc)
-  (pmatch-internal pattern input (gc-push-group gc (car rest-rule))))
+(defmethod pmatch-list ((sym (eql 'push-group)) rule pattern input gc)
+  (pmatch-internal pattern input (gc-push-group gc (cadr rule))))
 
-(defun pop-group (rest-rule pattern input gc)
-  (pmatch-internal pattern input (gc-pop-group gc (car rest-rule))))
+(defmethod pmatch-list ((sym (eql 'pop-group)) rule pattern input gc)
+  (pmatch-internal pattern input (gc-pop-group gc (cadr rule))))
