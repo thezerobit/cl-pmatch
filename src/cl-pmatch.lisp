@@ -10,6 +10,7 @@
            :pmatch-list
            :pmatch-aux
            :pmatch-internal
+           :match-single
            :compile-pattern
            :or
            :?
@@ -88,6 +89,8 @@
 ;; specialize on rule type, builtin handlers exist for symbols and lists
 (defgeneric pmatch-aux (rule pattern input gc))
 
+(defgeneric match-single (pattern-elem input-elem))
+
 (defmethod pmatch ((pattern list) input)
   (pmatch-internal (flatten-groups pattern) input (make-gc)))
 
@@ -99,14 +102,17 @@
     (and (null input) (or (gc-get-groups gc) *success*))
     (pmatch-aux (car pattern) (cdr pattern) input gc)))
 
-(defmethod pmatch-aux ((rule symbol) pattern input gc)
+(defmethod pmatch-aux ((rule list) pattern input gc)
+  (pmatch-list (car rule) rule pattern input gc))
+
+(defmethod pmatch-aux (rule pattern input gc)
   (and (not (null input))
-       (eql rule (car input))
+       (match-single rule (car input))
        (pmatch-internal pattern (cdr input)
                         (gc-add-value gc (car input)))))
 
-(defmethod pmatch-aux ((rule list) pattern input gc)
-  (pmatch-list (car rule) rule pattern input gc))
+(defmethod match-single (pattern-elem input-elem)
+  (equal pattern-elem input-elem))
 
 (defmethod pmatch-list ((sym (eql 'or)) rule pattern input gc)
   (dolist (option (cdr rule))

@@ -10,7 +10,7 @@
         :cl-test-more))
 (in-package :cl-pmatch-test)
 
-(plan 40)
+(plan 42)
 
 (defparameter *test-matches*
   `(
@@ -127,5 +127,17 @@
 (let ((fm (make-instance 'foo-matcher)))
   (is (pmatch (list 'a fm) '(a foo)) *success*)
   (is (pmatch (list 'a fm) '(a bar)) nil))
+
+(defclass ci-string () ((str :initarg :str
+                             :reader str)))
+
+(defun make-ci-string (str)
+  (make-instance 'ci-string :str str))
+
+(defmethod match-single ((pattern-elem ci-string) input-elem)
+  (string-equal (str pattern-elem) input-elem))
+
+(is (pmatch (list (make-ci-string "Hello")) '("hELLO")) *success*)
+(is (pmatch (list (make-ci-string "hello")) '("hELLO!")) nil)
 
 (finalize)
